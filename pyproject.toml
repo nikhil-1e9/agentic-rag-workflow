@@ -1,0 +1,20 @@
+[project]
+name = "paralegal-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "firecrawl-py>=0.0.16",
+    "llama-index>=0.10.0",
+    "llama-index-embeddings-huggingface>=0.2.0",
+    "llama-index-llms-openai>=0.1.0",
+    "loguru>=0.7.0",
+    "nest-asyncio>=1.6.0",
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.10.1",
+    "pymilvus>=2.4.0",
+    "python-dotenv>=1.0.0",
+    "streamlit>=1.48.0",
+]
