@@ -17,6 +17,43 @@ from src.workflows.agent_workflow import EnhancedRAGWorkflow
 from llama_index.core import SimpleDirectoryReader
 from config.settings import settings
 
+def _format_score(score: float) -> str:
+    try:
+        return f"{float(score):.3f}"
+    except Exception:
+        return str(score)
+
+def get_citations(retriever: Retriever, query: str, top_k: int = 3, snippet_chars: int = 220):
+    """Return top-k retrieval results as simple citation dicts."""
+    results = retriever.search_with_scores(query, top_k=top_k)
+    citations = []
+    for rank, item in enumerate(results, start=1):
+        context = (item.get("context") or "").strip()
+        snippet = (context[:snippet_chars] + ("…" if len(context) > snippet_chars else "")) if context else ""
+        citations.append({
+            "rank": rank,
+            "node_id": item.get("node_id"),
+            "score": item.get("score"),
+            "snippet": snippet,
+            "metadata": item.get("metadata") or {},
+        })
+    return citations
+
+def print_citations(citations):
+    if not citations:
+        print("\n(No citations available)")
+        return
+    print("\nCITATIONS (top matches)")
+    print("-" * 60)
+    for c in citations:
+        score_str = _format_score(c.get("score"))
+        node_id = c.get("node_id")
+        snippet = c.get("snippet") or ""
+        print(f"[{c['rank']}] score={score_str} id={node_id}")
+        if snippet:
+            print(f"    \u201c{snippet}\u201d")
+    print("-" * 60)
+
 async def main():
     """Main function demonstrating the complete pipeline."""
     
@@ -136,6 +173,12 @@ async def main():
                     print(f"\n🌐 Web search was used to enhance the response")
                 else:
                     print(f"\n📚 Response based on document knowledge")
+                    # Show top-k citations grounding the answer (only when RAG is used)
+                    try:
+                        citations = get_citations(retriever, query, top_k=min(3, settings.top_k))
+                        print_citations(citations)
+                    except Exception as e:
+                        logger.warning(f"Could not fetch citations: {e}")
                 
                 print("-"*60)
                 
