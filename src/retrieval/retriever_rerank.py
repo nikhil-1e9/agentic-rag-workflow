@@ -18,17 +18,8 @@ class Retriever:
         self.embed_data = embed_data
         self.top_k = top_k or settings.top_k
 
-    def search(self, query: str, top_k: Optional[int] = None) -> List[NodeWithScore]:
-        """
-        Search for relevant documents using vector similarity.
-        
-        Args:
-            query: Search query string
-            top_k: Number of results to return
-            
-        Returns:
-            List of NodeWithScore objects
-        """
+    def search(self, query: str, top_k: Optional[int] = None):
+        """Search for relevant documents using vector similarity."""
         if top_k is None:
             top_k = self.top_k
 
@@ -56,20 +47,20 @@ class Retriever:
             )
             nodes_with_scores.append(node_with_score)
 
-        logger.info(f"Retrieved {len(nodes_with_scores)} results for query")
+        # logger.info(f"Retrieved {len(nodes_with_scores)} results for query")
         return nodes_with_scores
 
-    def get_contexts(self, query: str, top_k: Optional[int] = None) -> List[str]:
+    def get_contexts(self, query: str, top_k: Optional[int] = None):
         """Get context strings from search results."""
         nodes_with_scores = self.search(query, top_k)
         return [node.node.text for node in nodes_with_scores]
 
-    def get_combined_context(self, query: str, top_k: Optional[int] = None, separator: str = "\n\n---\n\n") -> str:
+    def get_combined_context(self, query: str, top_k: Optional[int] = None, separator: str = "\n\n---\n\n"):
         """Get combined context from search results."""
         contexts = self.get_contexts(query, top_k)
         return separator.join(contexts)
 
-    def search_with_scores(self, query: str, top_k: Optional[int] = None) -> List[Dict[str, Any]]:
+    def search_with_scores(self, query: str, top_k: Optional[int] = None):
         """Search and return results with detailed scoring information."""
         nodes_with_scores = self.search(query, top_k)
         
@@ -83,3 +74,29 @@ class Retriever:
             })
         
         return results
+
+    def get_citations(self, query: str, top_k: int = 3, snippet_chars: int = 200):
+        """
+        Return top-k retrieval results formatted as citation dicts for UI display.
+
+        Each citation contains: rank, node_id, score, snippet, metadata
+        """
+        results = self.search_with_scores(query, top_k)
+        citations: List[Dict[str, Any]] = []
+        for rank, item in enumerate(results, start=1):
+            context = (item.get("context") or "").strip()
+            if context:
+                snippet = context[:snippet_chars]
+                if len(context) > snippet_chars:
+                    snippet += "…"
+            else:
+                snippet = ""
+
+            citations.append({
+                "rank": rank,
+                "node_id": item.get("node_id"),
+                "score": item.get("score"),
+                "snippet": snippet,
+                "metadata": item.get("metadata") or {},
+            })
+        return citations

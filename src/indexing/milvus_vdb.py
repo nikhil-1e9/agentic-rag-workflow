@@ -20,7 +20,7 @@ class MilvusVDB:
         self.db_file = db_file or settings.milvus_db_path
         self.client = None
 
-    def initialize_client(self) -> None:
+    def initialize_client(self):
         """Initialize the Milvus client."""
         try:
             self.client = MilvusClient(self.db_file)
@@ -29,7 +29,7 @@ class MilvusVDB:
             logger.error(f"Failed to initialize Milvus client: {e}")
             raise e
 
-    def create_collection(self) -> None:
+    def create_collection(self):
         """Create collection with binary vector support."""
         if not self.client:
             raise RuntimeError("Milvus client not initialized. Call initialize_client() first.")
@@ -81,7 +81,7 @@ class MilvusVDB:
 
         logger.info(f"Created collection '{self.collection_name}' with binary vectors (dim={self.vector_dim})")
 
-    def ingest_data(self, embed_data: EmbedData) -> None:
+    def ingest_data(self, embed_data: EmbedData):
         """Ingest embedded data into the vector database."""
         if not self.client:
             raise RuntimeError("Milvus client not initialized. Call initialize_client() first.")
@@ -146,13 +146,13 @@ class MilvusVDB:
 
         return formatted_results
 
-    def collection_exists(self) -> bool:
+    def collection_exists(self):
         """Check if collection exists."""
         if not self.client:
             return False
         return self.client.has_collection(collection_name=self.collection_name)
 
-    def get_collection_info(self) -> Dict[str, Any]:
+    def get_collection_info(self):
         """Get information about the collection."""
         if not self.client:
             raise RuntimeError("Milvus client not initialized. Call initialize_client() first.")
@@ -168,7 +168,7 @@ class MilvusVDB:
             "collection_name": self.collection_name
         }
 
-    def close(self) -> None:
+    def close(self):
         """Close the database connection."""
         if self.client:
             self.client.close()

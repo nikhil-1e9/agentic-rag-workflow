@@ -23,11 +23,11 @@ class EmbedData:
         self.cache_folder = cache_folder or settings.hf_cache_dir
         
         self.embed_model = self._load_embed_model()
-        self.embeddings: List[List[float]] = []
-        self.binary_embeddings: List[bytes] = []
-        self.contexts: List[str] = []
+        self.embeddings = []
+        self.binary_embeddings = []
+        self.contexts = []
 
-    def _load_embed_model(self) -> HuggingFaceEmbedding:
+    def _load_embed_model(self):
         """Load the embedding model."""
         logger.info(f"Loading embedding model: {self.embed_model_name}")
         
@@ -38,7 +38,7 @@ class EmbedData:
         )
         return embed_model
 
-    def _binary_quantize(self, embeddings: List[List[float]]) -> List[bytes]:
+    def _binary_quantize(self, embeddings: List[List[float]]):
         """Convert float32 embeddings to binary vectors."""
         embeddings_array = np.array(embeddings)
         binary_embeddings = np.where(embeddings_array > 0, 1, 0).astype(np.uint8)
@@ -47,11 +47,11 @@ class EmbedData:
         packed_embeddings = np.packbits(binary_embeddings, axis=1)
         return [vec.tobytes() for vec in packed_embeddings]
 
-    def generate_embedding(self, contexts: List[str]) -> List[List[float]]:
+    def generate_embedding(self, contexts: List[str]):
         """Generate embeddings for a batch of contexts."""
         return self.embed_model.get_text_embedding_batch(contexts)
 
-    def embed(self, contexts: List[str]) -> None:
+    def embed(self, contexts: List[str]):
         """Generate embeddings for all contexts with binary quantization."""
         self.contexts = contexts
         logger.info(f"Generating embeddings for {len(contexts)} contexts...")
@@ -67,18 +67,18 @@ class EmbedData:
 
         logger.info(f"Generated {len(self.embeddings)} embeddings with binary quantization")
 
-    def get_query_embedding(self, query: str) -> List[float]:
+    def get_query_embedding(self, query: str):
         """Generate embedding for a single query."""
         return self.embed_model.get_query_embedding(query)
 
-    def binary_quantize_query(self, query_embedding: List[float]) -> bytes:
+    def binary_quantize_query(self, query_embedding: List[float]):
         """Convert query embedding to binary format."""
         embedding_array = np.array([query_embedding])
         binary_embedding = np.where(embedding_array > 0, 1, 0).astype(np.uint8)
         packed_embedding = np.packbits(binary_embedding, axis=1)
         return packed_embedding[0].tobytes()
 
-    def clear(self) -> None:
+    def clear(self):
         """Clear stored embeddings and contexts."""
         self.embeddings.clear()
         self.binary_embeddings.clear()

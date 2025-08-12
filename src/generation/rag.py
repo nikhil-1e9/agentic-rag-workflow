@@ -70,7 +70,7 @@ class RAG:
         """Generate context from retrieval results."""
         return self.retriever.get_combined_context(query, top_k)
 
-    def query(self, query: str, stream: bool = False, top_k: Optional[int] = None) -> Any:
+    def query(self, query: str, stream=False, top_k=None):
         """
         Query the RAG system.
         
@@ -103,7 +103,7 @@ class RAG:
         chat_history: Optional[list] = None,
         stream: bool = False, 
         top_k: Optional[int] = None
-    ) -> Any:
+    ):
         """
         Query the RAG system with chat history support.
         
@@ -142,7 +142,7 @@ class RAG:
             chat_response = self.llm.chat(messages)
             return chat_response.message.content
 
-    def get_detailed_response(self, query: str, top_k: Optional[int] = None) -> dict:
+    def get_detailed_response(self, query: str, top_k: Optional[int] = None):
         """
         Get detailed response with context and sources.
         
@@ -170,17 +170,17 @@ class RAG:
             "model": self.llm_model
         }
 
-    def set_prompt_template(self, template: str) -> None:
+    def set_prompt_template(self, template: str):
         """Set a custom prompt template."""
         self.prompt_template = PromptTemplate(template=template)
         logger.info("Updated prompt template")
 
-    def set_system_message(self, content: str) -> None:
+    def set_system_message(self, content: str):
         """Set a custom system message."""
         self.system_message = ChatMessage(role=MessageRole.SYSTEM, content=content)
         logger.info("Updated system message")
 
-    def update_llm_params(self, **kwargs) -> None:
+    def update_llm_params(self, **kwargs):
         """Update LLM parameters."""
         for key, value in kwargs.items():
             if hasattr(self.llm, key):

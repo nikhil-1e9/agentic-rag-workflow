@@ -4,8 +4,6 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
-    """Application settings with environment variable support."""
-    
     # API Keys
     openai_api_key: str
     firecrawl_api_key: str
@@ -16,18 +14,18 @@ class Settings(BaseSettings):
     vector_dim: int = 1024
     
     # Retrieval Configuration
-    top_k: int = 5
+    top_k: int = 3
     batch_size: int = 512
     rerank_top_k: int = 3
     
     # Database Configuration
     milvus_db_path: str = "./data/milvus_binary.db"
-    collection_name: str = "legal_documents"
+    collection_name: str = "agentic_rag"
     
     # Cache Configuration
     hf_cache_dir: str = "./cache/hf_cache"
     
-    # Workflow Configuration
+    # LLM settings
     temperature: float = 0.6
     max_tokens: int = 1000
     
