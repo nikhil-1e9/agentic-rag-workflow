@@ -133,7 +133,7 @@ async def main():
                 print(result["answer"])
                 
                 if result.get("web_search_used", False):
-                    print(f"\n📊 Web search was used to enhance the response")
+                    print(f"\n🌐 Web search was used to enhance the response")
                 else:
                     print(f"\n📚 Response based on document knowledge")
                 
@@ -181,9 +181,9 @@ def print_detailed_results(result):
     
     print("="*60)
 
-async def test_basic_functionality():
-    """Test basic functionality without user input."""
-    logger.info("Running basic functionality test...")
+async def test_retrieval():
+    """Test retrieval without user input."""
+    logger.info("Running retrieval test...")
     
     # Create a simple test document
     test_text = [

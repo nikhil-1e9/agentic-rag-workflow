@@ -313,7 +313,7 @@ if prompt := st.chat_input("Ask a question about your document..."):
         message_placeholder = st.empty()
         
         try:
-            with st.spinner("🔄 Processing your question through the enhanced RAG pipeline..."):
+            with st.spinner("🔄 Processing your query..."):
                 # Run the async workflow
                 result = asyncio.run(run_workflow(prompt))
             

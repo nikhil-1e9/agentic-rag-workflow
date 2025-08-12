@@ -35,10 +35,12 @@ EVALUATION CRITERIA:
 - If the response says "I don't know" or similar, is it because the context truly lacks the information?
 
 Please evaluate the response quality and respond with either:
-- "SATISFACTORY" - if the response adequately answers the question
-- "UNSATISFACTORY" - if the response is incomplete, unclear, or doesn't answer the question
+- "GOOD" - if the response adequately answers the question
+- "BAD" - if the response is incomplete, unclear, or doesn't answer the question
 
-Your evaluation (SATISFACTORY or UNSATISFACTORY):"""
+IMPORTANT: Respond with ONLY ONE WORD in UPPERCASE: GOOD or BAD. No punctuation or extra text.
+
+Your evaluation (GOOD or BAD):"""
 )
 
 QUERY_OPTIMIZATION_TEMPLATE = PromptTemplate(
@@ -121,8 +123,9 @@ class EnhancedRAGWorkflow(Workflow):
         # Retrieve relevant documents
         retrieved_nodes = self.retriever.search(query, top_k=top_k)
         
-        # Store query in context for later steps
+        # Store values in context for later steps
         await ctx.set("query", query)
+        await ctx.set("retrieved_nodes", retrieved_nodes)
         
         logger.info(f"Retrieved {len(retrieved_nodes)} documents")
         return RetrieveEvent(retrieved_nodes=retrieved_nodes, query=query)
@@ -165,10 +168,12 @@ class EnhancedRAGWorkflow(Workflow):
         # Get evaluation from LLM
         evaluation_response = self.llm.complete(evaluation_prompt)
         evaluation = evaluation_response.text.strip().upper()
+        # Normalize to the first token/line to avoid extra generations
+        evaluation = evaluation.split()[0] if evaluation else ""
         
         logger.info(f"Evaluation result: {evaluation}")
         
-        if "SATISFACTORY" in evaluation:
+        if "GOOD" in evaluation:
             # RAG response is good, proceed to synthesis for refinement
             return SynthesizeEvent(
                 rag_response=rag_response,
@@ -206,18 +211,22 @@ class EnhancedRAGWorkflow(Workflow):
                 
                 # Perform web search using Firecrawl
                 search_response = self.firecrawl.search(optimized_query, limit=5)
-                
-                if search_response and 'data' in search_response:
-                    # Extract content from search results
-                    search_contents = []
-                    for result in search_response['data'][:3]:  # Use top 3 results
-                        if 'content' in result and result['content']:
-                            # Truncate content to avoid token limits
-                            content = result['content'][:1000]
-                            title = result.get('title', 'No title')
-                            url = result.get('url', 'No URL')
-                            search_contents.append(f"Title: {title}\nURL: {url}\nContent: {content}")
-                    
+                results_list = getattr(search_response, "data", None)
+
+                search_contents: list[str] = []
+                if isinstance(results_list, list) and results_list:
+                    for result in results_list[:3]:  # Use top 3 results
+                        if not isinstance(result, dict):
+                            continue
+                        url = result.get("url", "No URL")
+                        title = result.get("title", "No title")
+                        description = (result.get("description") or "").strip()
+                        snippet = description[:1000] if description else "[no description available]"
+                        search_contents.append(
+                            f"Title: {title}\nURL: {url}\nContent: {snippet}"
+                        )
+
+                if search_contents:
                     search_results = "\n\n---\n\n".join(search_contents)
                     logger.info(f"Retrieved {len(search_contents)} web search results")
                 else:
