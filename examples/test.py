@@ -250,6 +250,10 @@ async def test_retrieval():
     results = retriever.search("What is machine learning?")
     
     logger.info(f"Test completed. Retrieved {len(results)} results")
+
+    # Test citations
+    citations = get_citations(retriever, "What is machine learning?", top_k=3)
+    print(citations)
     
     # Cleanup
     vector_db.close()

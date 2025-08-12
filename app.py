@@ -331,6 +331,26 @@ if prompt := st.chat_input("Ask a question about your document..."):
                     st.info("🌐 This response includes information from web search")
                 else:
                     st.info("📚 This response is based on your document")
+                    # Show citations grounding the answer (only when RAG is used)
+                    try:
+                        retriever = getattr(st.session_state.workflow, "retriever", None)
+                        if retriever:
+                            citations = retriever.get_citations(prompt, top_k=3, snippet_chars=200)
+                            if citations:
+                                with st.expander("📎 Citations (top matches)"):
+                                    for c in citations:
+                                        score = c.get("score")
+                                        try:
+                                            score_str = f"{float(score):.3f}"
+                                        except Exception:
+                                            score_str = str(score)
+                                        st.markdown(
+                                            f"[{c['rank']}] score={score_str} id={c.get('node_id')}"
+                                        )
+                                        if c.get("snippet"):
+                                            st.code(c["snippet"], language="text")
+                    except Exception as e:
+                        st.warning(f"Could not fetch citations: {e}")
                 
             else:
                 full_response = str(result)
