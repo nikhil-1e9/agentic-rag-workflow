@@ -314,8 +314,11 @@ if prompt := st.chat_input("Ask a question about your document..."):
         
         try:
             with st.spinner("🔄 Processing your query..."):
-                # Run the async workflow
+                # Measure end-to-end workflow time
+                t0_workflow = time.perf_counter()
                 result = asyncio.run(run_workflow(prompt))
+                t1_workflow = time.perf_counter()
+                workflow_time = (t1_workflow - t0_workflow)
             
             # Display workflow logs
             if log_index < len(st.session_state.workflow_logs):
@@ -329,13 +332,23 @@ if prompt := st.chat_input("Ask a question about your document..."):
                 # Show additional info about the workflow
                 if result.get("web_search_used", False):
                     st.info("🌐 This response includes information from web search")
+                    # Only show completion time (no retrieval time on web search path)
+                    if 'workflow_time' in locals():
+                        st.caption(f"Completion time: {workflow_time} s")
                 else:
                     st.info("📚 This response is based on your document")
-                    # Show citations grounding the answer (only when RAG is used)
+                    # Measure retrieval time while fetching citations (only for RAG path)
+                    retrieval_ms = None
                     try:
                         retriever = getattr(st.session_state.workflow, "retriever", None)
                         if retriever:
+                            t0_retrieve = time.perf_counter()
+                            retriever.search(prompt)
+                            t1_retrieve = time.perf_counter()
+                            retrieval_time = int((t1_retrieve - t0_retrieve) * 1000)
+
                             citations = retriever.get_citations(prompt, top_k=3, snippet_chars=200)
+
                             if citations:
                                 with st.expander("📎 Citations (top matches)"):
                                     for c in citations:
@@ -351,6 +364,15 @@ if prompt := st.chat_input("Ask a question about your document..."):
                                             st.code(c["snippet"], language="text")
                     except Exception as e:
                         st.warning(f"Could not fetch citations: {e}")
+
+                    # Show timing caption (retrieval + completion)
+                    times = []
+                    if retrieval_time is not None:
+                        times.append(f"🕒 Retrieval time: {retrieval_time} ms")
+                    if 'workflow_time' in locals():
+                        times.append(f"🕒 Completion time: {workflow_time:.2f} s")
+                    if times:
+                        st.caption(" • ".join(times))
                 
             else:
                 full_response = str(result)
